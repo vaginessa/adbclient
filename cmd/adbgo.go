@@ -4,12 +4,12 @@ import (
     "os"
     "fmt"
     "bufio"
-    "github.com/alexjch/adbclient/comm"
+    "github.com/alexjch/adbclient/conn"
 )
 
 func main(){
     stdio := bufio.NewScanner(os.Stdin)
-    adbc := comm.NewConn()
+    adbc := &conn.ADBconn{}
 
     for stdio.Scan() {
         cmd := stdio.Text()

@@ -1,31 +1,57 @@
 package adbclient
 
 import (
-    "github.com/alexjch/adbclient/comm"
-    "github.com/alexjch/adbclient/comm"
-)
-
-const (
-    LIST_DEVICES = "host:devices"
+    "strings"
+    "github.com/alexjch/adbclient/conn"
 )
 
 type ADBClient struct {
-    comm interface{}
+    conn_ *conn.ADBconn
 }
 
 type Device struct {
+    // Type that encapsulates a device
     serialNumber string
     state string
 }
 
-func (adb *ADBClient) Devices() []Device{
+func parseDevices(result string) ([]Device, error){
     devices := []Device{}
-    adb.comm.Send()
+    lines := strings.Split(result, "\n")
+    for l := range lines{
+        values := strings.Split(lines[l], "\t")
+        if len(values) >= 2{
+            device := Device{
+                serialNumber: string(values[0]),
+                state: string(values[1]),
+            }
+            devices = append(devices, device)
+        }
+    }
+    return devices, nil
+}
+
+func (adb *ADBClient) Devices() ([]Device, error){
+    // Returns an array with devices connected to host
+    result, err := adb.conn_.Send(LIST_DEVICES)
+    if err != nil{
+        return nil, err
+    }
+    return parseDevices(result)
+}
+
+func (adb *ADBClient) Version() (string, error){
+    // Returns the version of the ADB server
+    result, err := adb.conn_.Send(VERSION)
+    if err != nil{
+        return "", err
+    }
+    return result, nil
 }
 
 func NewADBClient() *ADBClient{
     client := ADBClient{
-        comm: comm.NewConn(),
+        conn_: &conn.ADBconn{},
     }
 
     return &client
