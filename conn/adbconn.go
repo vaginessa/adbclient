@@ -64,32 +64,27 @@ func (a *ADBconn) Send (cmd string) (string, error){
 func (a *ADBconn) SendToHost (serial string, cmd string) (string, error){
     // Send command to host identify by serial
     conn, err := a.Connect()
-    out := []string{}
     if err != nil {
-        log.Fatalln("Error connecting: ", err)
+        log.Println("Error connecting: ", err)
         return "", err
     }
     defer conn.Close()
+    out := []string{}
     host := strings.Replace(HOST_TRANSPORT, "<id>", serial, 1)
-    err = a.send(conn, host)
-    if err != nil {
-        log.Fatalln("Error sending transport")
+    if err = a.send(conn, host); err != nil {
+        log.Println("Error sending transport")
         return "", err
     }
-    _, resp, err := a.receive(conn)
-    if strings.Contains(resp, "OKAY") != true {
+    if _, resp, _ := a.receive(conn); strings.Contains(resp, "OKAY") != true {
         return "", errors.New("OKAY header not fouund")
     }
-    err = a.send(conn, cmd)
-    if err != nil {
-        log.Fatalln("Error sending command")
+    if err = a.send(conn, cmd); err != nil {
+        log.Println("Error sending command")
         return "", err
     }
-    _, resp, err = a.receive(conn)
-    if strings.Contains(resp, "OKAY") != true {
+    if _, resp, _ := a.receive(conn); strings.Contains(resp, "OKAY") != true {
         return "", errors.New("OKAY header not fouund")
     }
-
     for {
         _, resp, err := a.receive(conn)
         if err != nil {
