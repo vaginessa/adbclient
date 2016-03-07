@@ -6,4 +6,6 @@ connection instead of command line adb invocations.
 API
 ===
 
+## Version()
 
+## Devices()

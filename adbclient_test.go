@@ -6,7 +6,7 @@ import (
 )
 
 func TestDevices(t *testing.T){
-    devices, err := NewADBClient().Devices()
+    devices, err := New().Devices()
     if err != nil{
         t.Error("Call to devices caused an error: ", err)
     }
@@ -17,7 +17,7 @@ func TestDevices(t *testing.T){
 }
 
 func TestVersion(t *testing.T){
-    _, err := NewADBClient().Version()
+    _, err := New().Version()
     if err != nil{
         t.Error("Unexpected error")
     }

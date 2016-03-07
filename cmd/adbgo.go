@@ -1,8 +1,8 @@
 package main
 
 import (
-    "os"
     "fmt"
+    "os"
     "bufio"
     "github.com/alexjch/adbclient/conn"
 )

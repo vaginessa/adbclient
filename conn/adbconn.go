@@ -4,65 +4,111 @@ import (
     "net"
     "fmt"
     "log"
-    "bufio"
     "errors"
-    "io/ioutil"
-    "strconv"
+    "strings"
+    "io"
 )
 
 const (
     PORT = 5037
-    CHECKSUM = "OKAY0000"
+    HOST_TRANSPORT = "host:transport:<id>"
 )
 
 type ADBconn struct{}
 
-func (a *ADBconn) formatCommand(cmd string) string{
-    return fmt.Sprintf("%04x%s", len(cmd), cmd)
+
+func (a *ADBconn) send (conn net.Conn, cmd string) error{
+    _, err := fmt.Fprintf(conn, "%04x%s", len(cmd), cmd)
+    if err != nil{
+        log.Fatalln("Error conn with: ", err)
+        return err
+    }
+    return nil
 }
 
-func (a *ADBconn) stripChecksum(resp string) (string, error){
-    if len(resp) < len(CHECKSUM){
-        return "", errors.New("Invalid checksum")
-    }
-    checksum := resp[0:8]
-    value := resp[8:]
-
-    length, err :=  strconv.ParseInt(checksum[4:], 16, 16)
+func (a *ADBconn) receive (conn net.Conn) (int, string, error){
+    buff := make([]byte, 256)
+    count, err := conn.Read(buff)
     if err != nil {
-        return "", errors.New("Invalid checksum, unable to parse message length")
+        return 0, "", err
     }
-
-    if int(length) != len(value){
-        return "", errors.New("Invalid checksum, length on header does not match length of message")
-    }
-
-    return value, nil
+    return count, string(buff[0:count]), nil
 }
 
 func (a *ADBconn) Connect () (net.Conn, error){
+    // Open a connection to ADB server
     conn, err := net.Dial("tcp", fmt.Sprintf(":%d", PORT))
     return conn, err
 }
 
 func (a *ADBconn) Send (cmd string) (string, error){
-    cmdFrmt := a.formatCommand(cmd)
+    // Send command to host
     conn, err := a.Connect()
     if err != nil {
         log.Fatalln("Error connecting: ", err)
         return "", err
     }
-    _, err = conn.Write([]byte(cmdFrmt))
-    if err != nil{
-        log.Fatalln("Error conn with: ", err)
-        return "", err
-    }
-    reader := bufio.NewReader(conn)
-    data, err := ioutil.ReadAll(reader)
+    defer conn.Close()
+    err = a.send(conn, cmd)
     if err != nil {
-        log.Fatalln("Error receiving: ", err)
+        log.Fatalln("Error sending command")
         return "", err
     }
-    conn.Close()
-    return a.stripChecksum(string(data))
+    _, resp, err := a.receive(conn)
+    if err != nil {
+        return "", err
+    }
+    return string(resp), nil
+}
+
+func (a *ADBconn) SendToHost (serial string, cmd string) (string, error){
+    // Send command to host identify by serial
+    conn, err := a.Connect()
+    out := []string{}
+    if err != nil {
+        log.Fatalln("Error connecting: ", err)
+        return "", err
+    }
+    defer conn.Close()
+    host := strings.Replace(HOST_TRANSPORT, "<id>", serial, 1)
+    err = a.send(conn, host)
+    if err != nil {
+        log.Fatalln("Error sending transport")
+        return "", err
+    }
+    _, resp, err := a.receive(conn)
+    if strings.Contains(resp, "OKAY") != true {
+        return "", errors.New("OKAY header not fouund")
+    }
+    err = a.send(conn, cmd)
+    if err != nil {
+        log.Fatalln("Error sending command")
+        return "", err
+    }
+    _, resp, err = a.receive(conn)
+    if strings.Contains(resp, "OKAY") != true {
+        return "", errors.New("OKAY header not fouund")
+    }
+
+    stripCR := func(r rune) rune {
+        if r == 13 {
+            return -1
+        }
+        return r
+    }
+
+    for {
+        _, resp, err := a.receive(conn)
+        if err != nil {
+            if err == io.EOF {
+                break
+            }
+            return "", err
+        }
+        data := strings.Map(stripCR, strings.Trim(resp, "\n"))
+        out = append(out, data)
+    }
+
+    result := strings.Join(out, "\n")
+    return result, nil
 }
