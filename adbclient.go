@@ -90,10 +90,10 @@ func (adb *ADBClient) Version() (string, error){
 }
 
 func New() *ADBClient{
+    // Returns a new instance of ADBClient
     client := ADBClient{
         conn_: &conn.ADBconn{},
     }
-
     return &client
 }
 

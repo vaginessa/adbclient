@@ -90,13 +90,6 @@ func (a *ADBconn) SendToHost (serial string, cmd string) (string, error){
         return "", errors.New("OKAY header not fouund")
     }
 
-    stripCR := func(r rune) rune {
-        if r == 13 {
-            return -1
-        }
-        return r
-    }
-
     for {
         _, resp, err := a.receive(conn)
         if err != nil {
@@ -105,10 +98,9 @@ func (a *ADBconn) SendToHost (serial string, cmd string) (string, error){
             }
             return "", err
         }
-        data := strings.Map(stripCR, strings.Trim(resp, "\n"))
-        out = append(out, data)
+        out = append(out, resp)
     }
 
-    result := strings.Join(out, "\n")
+    result := strings.Join(out, "")
     return result, nil
 }
