@@ -45,20 +45,19 @@ func (a *ADBconn) Send (cmd string) (string, error){
     // Send command to host
     conn, err := a.Connect()
     if err != nil {
-        log.Fatalln("Error connecting: ", err)
+        log.Println("Error connecting: ", err)
         return "", err
     }
     defer conn.Close()
-    err = a.send(conn, cmd)
-    if err != nil {
-        log.Fatalln("Error sending command")
+    if err = a.send(conn, cmd); err != nil {
+        log.Println("Error sending command")
         return "", err
     }
     _, resp, err := a.receive(conn)
     if err != nil {
         return "", err
     }
-    return string(resp), nil
+    return resp, nil
 }
 
 func (a *ADBconn) SendToHost (serial string, cmd string) (string, error){
@@ -95,7 +94,6 @@ func (a *ADBconn) SendToHost (serial string, cmd string) (string, error){
         }
         out = append(out, resp)
     }
-
     result := strings.Join(out, "")
     return result, nil
 }
