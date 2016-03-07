@@ -24,9 +24,8 @@ func TestVersion(t *testing.T){
 }
 
 func TestShell(t *testing.T){
-    resp, err := New().Shell("<a_valid_id>", "ls -all")
+    _, err := New().Shell("<a_valid_id>", "ls -all")
     if err != nil{
         t.Error("Unexpected error")
     }
-    t.Error(resp)
 }

@@ -9,3 +9,7 @@ API
 ## Version()
 
 ## Devices()
+
+## Pull()
+
+## Push()
