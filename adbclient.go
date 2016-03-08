@@ -1,6 +1,7 @@
 package adbclient
 
 import (
+    "fmt"
     "errors"
     "strconv"
     "strings"
@@ -86,7 +87,8 @@ func (adb *ADBClient) Version() (string, error){
     if err != nil{
         return "", err
     }
-    return result, nil
+    v, _ := strconv.ParseInt(result[8:], 16, 32)
+    return fmt.Sprintf("%d", v), nil
 }
 
 func New() *ADBClient{
