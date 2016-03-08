@@ -5,9 +5,8 @@ connection instead of command line adb invocations.
 
 #### API
 
-#### ```Version() (string)```
-
-Returns ADBD (adb daemon) version
+#### Version
+Returns ADBD (adb daemon) version ```Version() (string)```
 
 ```
 package main
@@ -25,9 +24,9 @@ func main(){
 }
 ```
 
-#### ```Devices() ([]Device, error)```
+#### Devices
 
-Returns a list of devices (encapsulated in a Device structure) 
+Returns a list of devices (encapsulated in a Device structure) ```Devices() ([]Device, error)```
 
 ```
 package main
@@ -45,8 +44,31 @@ func main(){
 }
 ```
 
-#### ```Track() (<-chan)```
+#### Track
 
-#### ```Pull()```
+Returns a channel that will produce a stream when a device status changes ```Track() (<-chan)```
 
-#### ```Push()```
+```
+package main
+
+import (
+    "github.com/alexjch/adbclient"
+)
+
+func main(){
+    devices := adbclient.New().Track()
+    for{
+        fmt.Println(<-devices)
+    }
+}
+```
+
+
+#### Pull
+
+Pull a file from device (WIP)
+
+#### Push
+
+Push file to device (WIP)
+
