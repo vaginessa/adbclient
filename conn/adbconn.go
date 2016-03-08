@@ -12,10 +12,10 @@ import (
 const (
     PORT = 5037
     HOST_TRANSPORT = "host:transport:<id>"
+    TRACK_CMD = "host:track-devices"
 )
 
 type ADBconn struct{}
-
 
 func (a *ADBconn) send (conn net.Conn, cmd string) error{
     _, err := fmt.Fprintf(conn, "%04x%s", len(cmd), cmd)
@@ -40,6 +40,36 @@ func (a *ADBconn) Connect () (net.Conn, error){
     conn, err := net.Dial("tcp", fmt.Sprintf(":%d", PORT))
     return conn, err
 }
+
+func (a *ADBconn) Track () <-chan string{
+    //
+    conn, err := a.Connect()
+    if err != nil {
+        log.Println("Error connecting: ", err)
+        return nil
+    }
+    if err = a.send(conn, TRACK_CMD); err != nil {
+        log.Println("Error sending command")
+        return nil
+    }
+
+    out := make(chan string)
+
+    go func(){
+        for{
+            _, resp, err := a.receive(conn)
+            if err != nil {
+                log.Println("Error receiving data")
+                conn.Close()
+                break
+            }
+            out <- resp
+        }
+    }()
+
+    return out
+}
+
 
 func (a *ADBconn) Send (cmd string) (string, error){
     // Send command to host

@@ -25,7 +25,18 @@ func devices(){
     fmt.Println(version)
 }
 
+func track(){
+    devices := adbclient.New().Track()
+
+    for{
+        fmt.Println(<-devices)
+    }
+}
+
 func main(){
+
+    track()
+
     stdio := bufio.NewScanner(os.Stdin)
     adbc := &conn.ADBconn{}
 

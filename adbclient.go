@@ -91,6 +91,23 @@ func (adb *ADBClient) Version() (string, error){
     return fmt.Sprintf("%d", v), nil
 }
 
+func (adb *ADBClient) Track() <-chan []Device{
+    devices := adb.conn_.Track()
+    update := make(chan []Device)
+
+    go func(){
+        for{
+            devcs, err := parseDevices(<-devices)
+            if err != nil {
+                break
+            }
+            update <- devcs
+        }
+    }()
+
+    return update
+}
+
 func New() *ADBClient{
     // Returns a new instance of ADBClient
     client := ADBClient{

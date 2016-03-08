@@ -3,6 +3,7 @@ package adbclient
 import (
     "testing"
     "reflect"
+    "os"
 )
 
 func TestDevices(t *testing.T){
@@ -24,7 +25,8 @@ func TestVersion(t *testing.T){
 }
 
 func TestShell(t *testing.T){
-    _, err := New().Shell("<a_valid_id>", "ls -all")
+    serialN := os.Getenv("DEV_SERIAL")
+    _, err := New().Shell(serialN, "ls -all")
     if err != nil{
         t.Error("Unexpected error")
     }
