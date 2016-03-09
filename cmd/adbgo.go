@@ -33,9 +33,17 @@ func track(){
     }
 }
 
+func sync(){
+    result, err := adbclient.New().Pull("075923ba00cc8e9c", "/mnt")
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println("Succeded ", result)
+}
+
 func main(){
 
-    track()
+    sync()
 
     stdio := bufio.NewScanner(os.Stdin)
     adbc := &conn.ADBconn{}

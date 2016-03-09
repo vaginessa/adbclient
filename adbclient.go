@@ -62,6 +62,11 @@ func parseDevices(result string) ([]Device, error){
     return devices, nil
 }
 
+func (adb *ADBClient) Pull(serial string, filename string) (string, error){
+    // Pulls a file from device
+    return adb.conn_.Sync(serial, filename)
+}
+
 func (adb *ADBClient) Shell(serial, query string) (string, error) {
     // Sends a command to shell
     result, err := adb.conn_.SendToHost(serial, strings.Replace(SHELL, "<cmd>", query, 1))

@@ -7,12 +7,15 @@ import (
     "errors"
     "strings"
     "io"
+    "bytes"
+    "encoding/binary"
 )
 
 const (
     PORT = 5037
     HOST_TRANSPORT = "host:transport:<id>"
     TRACK_CMD = "host:track-devices"
+    SYNC = "sync:"
 )
 
 type ADBconn struct{}
@@ -40,6 +43,60 @@ func (a *ADBconn) Connect () (net.Conn, error){
     conn, err := net.Dial("tcp", fmt.Sprintf(":%d", PORT))
     return conn, err
 }
+
+func (a *ADBconn) Sync (serial string, path string)  (string, error) {
+    conn, err := a.Connect()
+    if err != nil {
+        log.Println("Error connecting: ", err)
+        return "", err
+    }
+    host := strings.Replace(HOST_TRANSPORT, "<id>", serial, 1)
+    if err = a.send(conn, host); err != nil {
+        log.Println("Error sending transport")
+        return "", err
+    }
+    if _, resp, _ := a.receive(conn); strings.Contains(resp, "OKAY") != true {
+        return "", errors.New("OKAY header not fouund")
+    }
+    if err = a.send(conn, SYNC); err != nil {
+        log.Println("Error sending command")
+        return "", err
+    }
+    if _, resp, _ := a.receive(conn); strings.Contains(resp, "OKAY") != true {
+        return "", errors.New("OKAY header not fouund")
+    }
+
+    length := uint32(len(path))
+    buf := new(bytes.Buffer)
+    binary.Write(buf, binary.BigEndian, []byte("LIST"))
+    binary.Write(buf, binary.LittleEndian, length)
+    binary.Write(buf, binary.BigEndian, []byte(path))
+
+    count, err := conn.Write(buf.Bytes())
+
+    if err != nil {
+        log.Println("Failed sending sync command ", err)
+        return "", err
+    }
+
+    log.Println("Received from sending command ", count)
+
+    for {
+        _, resp, err := a.receive(conn)
+        if err != nil {
+            if err == io.EOF {
+                break
+            }
+            return "", err
+        }
+        mode, _ := binary.Uvarint([]byte(resp[4:8]))
+        size, _ := binary.Uvarint([]byte(resp[8:12]))
+        log.Println("resp: ", resp[0:4], mode, size)
+    }
+
+    return "Hello", nil
+}
+
 
 func (a *ADBconn) Track () <-chan string{
     //
