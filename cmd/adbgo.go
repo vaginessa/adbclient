@@ -42,7 +42,6 @@ func sync(){
 }
 
 func main(){
-
     sync()
 
     stdio := bufio.NewScanner(os.Stdin)

@@ -29,13 +29,13 @@ func (a *ADBconn) send (conn net.Conn, cmd string) error{
     return nil
 }
 
-func (a *ADBconn) receive (conn net.Conn) (int, string, error){
+func (a *ADBconn) receive (conn net.Conn) (int, *bytes.Buffer, error){
     buff := make([]byte, 256)
     count, err := conn.Read(buff)
     if err != nil {
-        return 0, "", err
+        return 0, nil, err
     }
-    return count, string(buff[0:count]), nil
+    return count, bytes.NewBuffer(buff[0:count]), nil
 }
 
 func (a *ADBconn) Connect () (net.Conn, error){
@@ -55,14 +55,14 @@ func (a *ADBconn) Sync (serial string, path string)  (string, error) {
         log.Println("Error sending transport")
         return "", err
     }
-    if _, resp, _ := a.receive(conn); strings.Contains(resp, "OKAY") != true {
+    if _, resp, _ := a.receive(conn); strings.Contains(resp.String(), "OKAY") != true {
         return "", errors.New("OKAY header not fouund")
     }
     if err = a.send(conn, SYNC); err != nil {
         log.Println("Error sending command")
         return "", err
     }
-    if _, resp, _ := a.receive(conn); strings.Contains(resp, "OKAY") != true {
+    if _, resp, _ := a.receive(conn); strings.Contains(resp.String(), "OKAY") != true {
         return "", errors.New("OKAY header not fouund")
     }
 
@@ -81,6 +81,9 @@ func (a *ADBconn) Sync (serial string, path string)  (string, error) {
 
     log.Println("Received from sending command ", count)
 
+
+    out := new(bytes.Buffer)
+    // TODO: these two should use a scanner
     for {
         _, resp, err := a.receive(conn)
         if err != nil {
@@ -89,9 +92,29 @@ func (a *ADBconn) Sync (serial string, path string)  (string, error) {
             }
             return "", err
         }
-        mode, _ := binary.Uvarint([]byte(resp[4:8]))
-        size, _ := binary.Uvarint([]byte(resp[8:12]))
-        log.Println("resp: ", resp[0:4], mode, size)
+
+      out.Write(resp.Bytes())
+
+        if strings.Contains(resp.String(), "DONE"){
+          break
+        }
+    }
+
+   for ; out.Len() > 0; {
+     var mode, size, stat, nLen uint32
+     name := out.Next(4)
+     log.Println(string(name))
+     data := bytes.NewReader(out.Next(4))
+     binary.Read(data, binary.LittleEndian, &mode)
+     data = bytes.NewReader(out.Next(4))
+     binary.Read(data, binary.LittleEndian, &size)
+     data = bytes.NewReader(out.Next(4))
+     binary.Read(data, binary.LittleEndian, &stat)
+     data = bytes.NewReader(out.Next(4))
+     binary.Read(data, binary.LittleEndian, &nLen)
+     fname := out.Next(int(nLen))
+     log.Println(string(fname))
+     log.Println(fmt.Sprintf("mode:%d size:%d stat:%d name lenght:%d", mode, size, stat, nLen))
     }
 
     return "Hello", nil
@@ -120,7 +143,7 @@ func (a *ADBconn) Track () <-chan string{
                 conn.Close()
                 break
             }
-            out <- resp
+            out <- resp.String()
         }
     }()
 
@@ -144,7 +167,7 @@ func (a *ADBconn) Send (cmd string) (string, error){
     if err != nil {
         return "", err
     }
-    return resp, nil
+    return resp.String(), nil
 }
 
 func (a *ADBconn) SendToHost (serial string, cmd string) (string, error){
@@ -161,14 +184,14 @@ func (a *ADBconn) SendToHost (serial string, cmd string) (string, error){
         log.Println("Error sending transport")
         return "", err
     }
-    if _, resp, _ := a.receive(conn); strings.Contains(resp, "OKAY") != true {
+    if _, resp, _ := a.receive(conn); strings.Contains(resp.String(), "OKAY") != true {
         return "", errors.New("OKAY header not fouund")
     }
     if err = a.send(conn, cmd); err != nil {
         log.Println("Error sending command")
         return "", err
     }
-    if _, resp, _ := a.receive(conn); strings.Contains(resp, "OKAY") != true {
+    if _, resp, _ := a.receive(conn); strings.Contains(resp.String(), "OKAY") != true {
         return "", errors.New("OKAY header not fouund")
     }
     for {
@@ -179,7 +202,7 @@ func (a *ADBconn) SendToHost (serial string, cmd string) (string, error){
             }
             return "", err
         }
-        out = append(out, resp)
+        out = append(out, resp.String())
     }
     result := strings.Join(out, "")
     return result, nil
