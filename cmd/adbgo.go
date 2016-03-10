@@ -33,16 +33,34 @@ func track(){
     }
 }
 
-func sync(){
-    result, err := adbclient.New().Pull("075923ba00cc8e9c", "/mnt")
+func syncList(path string){
+    result, err := adbclient.New().Sync("LIST", "075923ba00cc8e9c", path)
     if err != nil {
         fmt.Println("Failed with error: ", err)
     }
-    fmt.Println("Succeded ", result)
+    fmt.Println(result)
+}
+
+func syncStat(path string){
+    result, err := adbclient.New().Sync("STAT", "075923ba00cc8e9c", path)
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println(result)
+}
+
+func syncRecv(path string){
+    result, err := adbclient.New().Sync("RECV", "075923ba00cc8e9c", path)
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println(result)
 }
 
 func main(){
-    sync()
+/*    syncList("/mnt")
+    syncStat("/default.prop") */
+    syncRecv("/default.prop")
 
     stdio := bufio.NewScanner(os.Stdin)
     adbc := &conn.ADBconn{}
