@@ -45,4 +45,5 @@ func TestPull(t *testing.T){
     if _, err := os.Stat(FILE_NAME); os.IsNotExist(err) {
         t.Error("File was not found")
     }
+    os.Remove(FILE_NAME)
 }

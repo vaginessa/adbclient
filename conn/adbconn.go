@@ -80,8 +80,27 @@ func (a *ADBconn) readStat(conn net.Conn) (string, error){
     return dataOut.String(), nil
 }
 
-func (a *ADBconn) readList(conn net.Conn) (string, error){
-    // TODO: brake in two read and parse
+func parseList(in *bytes.Buffer) string{
+    dataOut := new(bytes.Buffer)
+    for ; in.Len() > 0; {
+        var mode, size, stat, nLen uint32
+        in.Next(4)
+        data := bytes.NewReader(in.Next(4))
+        binary.Read(data, binary.LittleEndian, &mode)
+        data = bytes.NewReader(in.Next(4))
+        binary.Read(data, binary.LittleEndian, &size)
+        data = bytes.NewReader(in.Next(4))
+        binary.Read(data, binary.LittleEndian, &stat)
+        data = bytes.NewReader(in.Next(4))
+        binary.Read(data, binary.LittleEndian, &nLen)
+        fname := in.Next(int(nLen))
+        line := fmt.Sprintf("%s mode:%d size:%d stat:%d name lenght:%d\n", fname, mode, size, stat, nLen)
+        dataOut.Write([]byte(line))
+    }
+    return dataOut.String()
+}
+
+func (a *ADBconn) readLoop (conn net.Conn) (*bytes.Buffer, error){
     out := new(bytes.Buffer)
     for {
         _, resp, err := a.receive(conn)
@@ -89,7 +108,7 @@ func (a *ADBconn) readList(conn net.Conn) (string, error){
             if err == io.EOF {
                 break
             }
-            return "", err
+            return nil, err
         }
         if strings.Contains(string(resp), "DONE") {
             indx := strings.Index(string(resp), "DONE")
@@ -99,23 +118,15 @@ func (a *ADBconn) readList(conn net.Conn) (string, error){
             out.Write(resp)
         }
     }
-    dataOut := new(bytes.Buffer)
-    for ; out.Len() > 0; {
-        var mode, size, stat, nLen uint32
-        out.Next(4)
-        data := bytes.NewReader(out.Next(4))
-        binary.Read(data, binary.LittleEndian, &mode)
-        data = bytes.NewReader(out.Next(4))
-        binary.Read(data, binary.LittleEndian, &size)
-        data = bytes.NewReader(out.Next(4))
-        binary.Read(data, binary.LittleEndian, &stat)
-        data = bytes.NewReader(out.Next(4))
-        binary.Read(data, binary.LittleEndian, &nLen)
-        fname := out.Next(int(nLen))
-        line := fmt.Sprintf("%s mode:%d size:%d stat:%d name lenght:%d\n", fname, mode, size, stat, nLen)
-        dataOut.Write([]byte(line))
+    return out, nil
+}
+
+func (a *ADBconn) readList(conn net.Conn) (string, error){
+    out, err := a.readLoop(conn)
+    if err != nil{
+        return "", err
     }
-    return dataOut.String(), nil
+    return parseList(out), nil
 }
 
 func (a *ADBconn) readRecv (conn net.Conn, filename string) (string, error){
