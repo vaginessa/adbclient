@@ -46,7 +46,7 @@ func main(){
 
 #### Track
 
-Returns a channel that will produce a stream when a device status changes ```Track() (<-chan)```
+Track changes in devices connected to ADB and reports the changes using a channel ```Track() (<-chan)```
 
 ```
 package main
