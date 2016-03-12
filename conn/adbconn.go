@@ -144,16 +144,10 @@ func (a *ADBconn) readRecv (conn net.Conn, filename string) (string, error){
             total = total + uint64(count)
             break
         } else if strings.Contains(string(resp), "DATA") {
-            /*chunkLen := uint(0)
-            chunkReader := bytes.NewReader(resp[4:8])
-            binary.Read(chunkReader, binary.LittleEndian, &chunkLen)*/
             count, err := f.Write(resp[8:])
             if err != nil {
                 return "", err
             }
-            /*if chunkLen != uint(count) {
-                return "", errors.New("Length of chunk and length of bytes read should be the same")
-            }*/
             total = total + uint64(count)
         } else {
             count, err := f.Write(resp)

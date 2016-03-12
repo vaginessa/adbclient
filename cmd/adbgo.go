@@ -61,7 +61,7 @@ func syncRecv(serial, filePath string){
 func main(){
     syncList(serialN, "/mnt")
     syncStat(serialN, "/default.prop")
-    syncRecv(serialN, "/mnt/sdcard/test.zip")
+    syncRecv(serialN, "/default.prop")
 
     stdio := bufio.NewScanner(os.Stdin)
     adbc := &conn.ADBconn{}
