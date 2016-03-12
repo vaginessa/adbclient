@@ -1,13 +1,15 @@
 package conn
 
 import (
+    "os"
+    "io"
     "net"
     "fmt"
     "log"
+    "path"
+    "bytes"
     "errors"
     "strings"
-    "io"
-    "bytes"
     "encoding/binary"
 )
 
@@ -79,7 +81,7 @@ func (a *ADBconn) readStat(conn net.Conn) (string, error){
 }
 
 func (a *ADBconn) readList(conn net.Conn) (string, error){
-    // TODO: brake in two real and parse
+    // TODO: brake in two read and parse
     out := new(bytes.Buffer)
     for {
         _, resp, err := a.receive(conn)
@@ -116,9 +118,15 @@ func (a *ADBconn) readList(conn net.Conn) (string, error){
     return dataOut.String(), nil
 }
 
-func (a *ADBconn) readRecv (conn net.Conn) (string, error){
+func (a *ADBconn) readRecv (conn net.Conn, filename string) (string, error){
 
-    out := new(bytes.Buffer)
+    total := uint64(0)
+    f, err := os.Create(filename)
+    if err != nil{
+        return "", err
+    }
+    defer f.Close()
+
     for {
         _, resp, err := a.receive(conn)
         if err != nil {
@@ -129,26 +137,44 @@ func (a *ADBconn) readRecv (conn net.Conn) (string, error){
         }
         if strings.Contains(string(resp), "DONE") {
             indx := strings.Index(string(resp), "DONE")
-            out.Write(resp[0:indx])
+            count, err := f.Write(resp[0:indx])
+            if err != nil {
+                return "", err
+            }
+            total = total + uint64(count)
             break
         } else if strings.Contains(string(resp), "DATA") {
-            log.Println("Received token DATA")
+            /*chunkLen := uint(0)
+            chunkReader := bytes.NewReader(resp[4:8])
+            binary.Read(chunkReader, binary.LittleEndian, &chunkLen)*/
+            count, err := f.Write(resp[8:])
+            if err != nil {
+                return "", err
+            }
+            /*if chunkLen != uint(count) {
+                return "", errors.New("Length of chunk and length of bytes read should be the same")
+            }*/
+            total = total + uint64(count)
         } else {
-            out.Write(resp)
+            count, err := f.Write(resp)
+            if err != nil {
+                return "", err
+            }
+            total = total + uint64(count)
         }
     }
 
-    // TODO: file type? save chunks to disk removing "DATA" flags
+    f.Sync()
 
-    return "", nil
+    return fmt.Sprintf("Downloaded [%s] %d bytes", filename, total), nil
 }
 
-func (a *ADBconn) syncCmd(conn net.Conn, cmd, path string) (error) {
-    length := uint32(len(path))
+func (a *ADBconn) syncCmd(conn net.Conn, cmd, filePath string) (error) {
+    length := uint32(len(filePath))
     buf := new(bytes.Buffer)
     binary.Write(buf, binary.BigEndian, []byte(cmd))
     binary.Write(buf, binary.LittleEndian, length)
-    binary.Write(buf, binary.BigEndian, []byte(path))
+    binary.Write(buf, binary.BigEndian, []byte(filePath))
     _, err := conn.Write(buf.Bytes())
     if err != nil {
         log.Println("Failed sending sync command ", err)
@@ -157,7 +183,7 @@ func (a *ADBconn) syncCmd(conn net.Conn, cmd, path string) (error) {
     return nil
 }
 
-func (a *ADBconn) Sync(cmd, serial, path string) (string, error) {
+func (a *ADBconn) Sync(cmd, serial, filePath string) (string, error) {
     conn, err := a.Connect()
     if err != nil {
         log.Println("Error connecting: ", err)
@@ -169,19 +195,19 @@ func (a *ADBconn) Sync(cmd, serial, path string) (string, error) {
         return "", err
     }
     if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {
-        return "", errors.New("OKAY header not fouund")
+        return "", errors.New("OKAY header not found: " + string(resp[0:4]))
     }
     if err = a.send(conn, SYNC); err != nil {
         log.Println("Error sending command")
         return "", err
     }
     if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {
-        return "", errors.New("OKAY header not fouund")
+        return "", errors.New("OKAY header not found: " + string(resp[0:4]))
     }
 
     defer conn.Close()
 
-    if err := a.syncCmd(conn, cmd, path); err != nil {
+    if err := a.syncCmd(conn, cmd, filePath); err != nil {
         return "", err
     }
 
@@ -191,7 +217,8 @@ func (a *ADBconn) Sync(cmd, serial, path string) (string, error) {
     case "STAT":
         return a.readStat(conn)
     case "RECV":
-        return a.readRecv(conn)
+        filename := path.Base(filePath)
+        return a.readRecv(conn, filename)
     default:
         return "", errors.New(fmt.Sprintf("Command %s is non existent", cmd))
     }
@@ -262,14 +289,14 @@ func (a *ADBconn) SendToHost(serial string, cmd string) (string, error) {
         return "", err
     }
     if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {
-        return "", errors.New("OKAY header not fouund")
+        return "", errors.New("OKAY header not found")
     }
     if err = a.send(conn, cmd); err != nil {
         log.Println("Error sending command")
         return "", err
     }
     if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {
-        return "", errors.New("OKAY header not fouund")
+        return "", errors.New("OKAY header not found")
     }
     for {
         _, resp, err := a.receive(conn)

@@ -1,13 +1,14 @@
 package main
 
 import (
-    "fmt"
     "os"
+    "fmt"
     "bufio"
     "github.com/alexjch/adbclient"
     "github.com/alexjch/adbclient/conn"
 )
 
+var serialN = os.Getenv("DEV_SERIAL")
 
 func version(){
     version, err := adbclient.New().Version()
@@ -33,24 +34,24 @@ func track(){
     }
 }
 
-func syncList(path string){
-    result, err := adbclient.New().Sync("LIST", "075923ba00cc8e9c", path)
+func syncList(serial, filePath string){
+    result, err := adbclient.New().Sync("LIST", serial, filePath)
     if err != nil {
         fmt.Println("Failed with error: ", err)
     }
     fmt.Println(result)
 }
 
-func syncStat(path string){
-    result, err := adbclient.New().Sync("STAT", "075923ba00cc8e9c", path)
+func syncStat(serial, filePath string){
+    result, err := adbclient.New().Sync("STAT", serial, filePath)
     if err != nil {
         fmt.Println("Failed with error: ", err)
     }
     fmt.Println(result)
 }
 
-func syncRecv(path string){
-    result, err := adbclient.New().Sync("RECV", "075923ba00cc8e9c", path)
+func syncRecv(serial, filePath string){
+    result, err := adbclient.New().Sync("RECV", serial, filePath)
     if err != nil {
         fmt.Println("Failed with error: ", err)
     }
@@ -58,9 +59,9 @@ func syncRecv(path string){
 }
 
 func main(){
-/*    syncList("/mnt")
-    syncStat("/default.prop") */
-    syncRecv("/default.prop")
+    syncList(serialN, "/mnt")
+    syncStat(serialN, "/default.prop")
+    syncRecv(serialN, "/mnt/sdcard/test.zip")
 
     stdio := bufio.NewScanner(os.Stdin)
     adbc := &conn.ADBconn{}
