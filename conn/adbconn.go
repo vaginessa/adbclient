@@ -188,34 +188,86 @@ func (a *ADBconn) syncCmd(conn net.Conn, cmd, filePath string) (error) {
     return nil
 }
 
+func (a *ADBconn) sync(conn net.Conn, serial string) (error){
+    host := strings.Replace(HOST_TRANSPORT, "<id>", serial, 1)
+    log.Println(host)
+    if err := a.send(conn, host); err != nil {
+        log.Println("Error sending transport")
+        return err
+    }
+    if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {
+        return errors.New("OKAY header not found: " + string(resp[0:4]))
+    }
+    if err := a.send(conn, SYNC); err != nil {
+        log.Println("Error sending command")
+        return err
+    }
+    if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {
+        return errors.New("OKAY header not found: " + string(resp[0:4]))
+    }
+    return nil
+}
+
+func (a *ADBconn) Push(serial, srcPath, destPath string) (string, error) {
+    conn, err := a.Connect()
+    if err != nil {
+        log.Println("Error connecting: ", err)
+        return "", err
+    }
+    defer conn.Close()
+    if err := a.sync(conn, serial); err != nil {
+        return "", err
+    }
+    filePath := fmt.Sprintf("%s,666", destPath)
+    if err := a.syncCmd(conn, "SEND", filePath); err != nil {
+        return "", err
+    }
+    f, err := os.Open(srcPath)
+    defer f.Close()
+    if err != nil {
+        return "", err
+    }
+    buff := make([]byte, 8192)
+    for {
+        count, err := f.Read(buff)
+        if err != nil {
+            if err == io.EOF {
+                _, err = conn.Write([]byte("DONE"))
+                break
+            }
+            return "", err
+        }
+        outBuff := new(bytes.Buffer)
+        length := uint32(count)
+        binary.Write(outBuff, binary.BigEndian, []byte("DATA"))
+        binary.Write(outBuff, binary.LittleEndian, length)
+        _, err = conn.Write(outBuff.Bytes())
+        if err != nil {
+            log.Println("Failed sending sync command ", err)
+            return "", err
+        }
+        _, err = conn.Write(buff[0:count])
+        if err != nil {
+            log.Println("Failed sending sync command ", err)
+            return "", err
+        }
+    }
+    return "", nil
+}
+
 func (a *ADBconn) Sync(cmd, serial, filePath string) (string, error) {
     conn, err := a.Connect()
     if err != nil {
         log.Println("Error connecting: ", err)
         return "", err
     }
-    host := strings.Replace(HOST_TRANSPORT, "<id>", serial, 1)
-    if err = a.send(conn, host); err != nil {
-        log.Println("Error sending transport")
-        return "", err
-    }
-    if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {
-        return "", errors.New("OKAY header not found: " + string(resp[0:4]))
-    }
-    if err = a.send(conn, SYNC); err != nil {
-        log.Println("Error sending command")
-        return "", err
-    }
-    if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {
-        return "", errors.New("OKAY header not found: " + string(resp[0:4]))
-    }
-
     defer conn.Close()
-
+    if err := a.sync(conn, serial); err != nil {
+        return "", err
+    }
     if err := a.syncCmd(conn, cmd, filePath); err != nil {
         return "", err
     }
-
     switch cmd {
     case "LIST":
         return a.readList(conn)
@@ -227,7 +279,6 @@ func (a *ADBconn) Sync(cmd, serial, filePath string) (string, error) {
     default:
         return "", errors.New(fmt.Sprintf("Command %s is non existent", cmd))
     }
-
     return "", nil
 }
 

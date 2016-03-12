@@ -77,6 +77,11 @@ func (adb *ADBClient) Pull(serial, filename string) (string, error){
     return adb.conn_.Sync("RECV", serial, filename)
 }
 
+func (adb *ADBClient) Push(serial, source, destination string) (string, error){
+    // Pulls a file from device
+    return adb.conn_.Push(serial, source, destination)
+}
+
 func (adb *ADBClient) Shell(serial, query string) (string, error) {
     // Sends a command to shell
     result, err := adb.conn_.SendToHost(serial, strings.Replace(SHELL, "<cmd>", query, 1))

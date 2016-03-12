@@ -58,11 +58,20 @@ func pull(serial, filePath string){
     fmt.Println(result)
 }
 
-func main(){
-    syncList(serialN, "/mnt")
-    syncStat(serialN, "/default.prop")
-    pull(serialN, "/default.prop")
+func push(serial, origin, destination string){
+    result, err := adbclient.New().Push(serial, origin, destination)
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println(result)
+}
 
+
+func main(){
+/*    syncList(serialN, "/mnt")
+    syncStat(serialN, "/default.prop")
+    pull(serialN, "/default.prop")*/
+    push(serialN, "/Users/alexjch/Downloads/edisonbluetooth_331704007.pdf", "/mnt/sdcard/bluez.pdf")
     stdio := bufio.NewScanner(os.Stdin)
     adbc := &conn.ADBconn{}
 
