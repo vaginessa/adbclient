@@ -91,6 +91,15 @@ func (adb *ADBClient) Shell(serial, query string) (string, error) {
     return result, nil
 }
 
+func (adb *ADBClient) GetProp(serial string) (string, error) {
+    // Sends a command to shell
+    result, err := adb.conn_.SendToHost(serial, strings.Replace(SHELL, "<cmd>", "getprop", 1))
+    if err != nil{
+        return "", err
+    }
+    return result, nil
+}
+
 func (adb *ADBClient) Devices() ([]Device, error){
     // Returns an array with devices connected to host
     result, err := adb.conn_.Send(LIST_DEVICES)

@@ -103,3 +103,24 @@ func main(){
     fmt.Println(message)
 }
 ```
+
+
+#### GetProp
+
+Get the list of device properties from device ```GetProp(serial string) (string, error)```
+
+```
+package main
+
+import (
+    "github.com/alexjch/adbclient"
+)
+
+func main(){
+    props, err := adbclient.New().GetProp("anchdgetsr345sacdf")
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println(props)
+}
+```

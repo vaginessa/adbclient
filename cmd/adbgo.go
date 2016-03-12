@@ -66,12 +66,20 @@ func push(serial, origin, destination string){
     fmt.Println(result)
 }
 
+func getprop(serial string){
+    props, err := adbclient.New().GetProp(serial)
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println(props)
+}
 
 func main(){
 /*    syncList(serialN, "/mnt")
     syncStat(serialN, "/default.prop")
     pull(serialN, "/default.prop")*/
-    push(serialN, "/Users/alexjch/Downloads/edisonbluetooth_331704007.pdf", "/mnt/sdcard/bluez.pdf")
+//    push(serialN, "/Users/alexjch/Downloads/edisonbluetooth_331704007.pdf", "/mnt/sdcard/bluez.pdf")
+    getprop(serialN)
     stdio := bufio.NewScanner(os.Stdin)
     adbc := &conn.ADBconn{}
 
