@@ -31,3 +31,18 @@ func TestShell(t *testing.T){
         t.Error("Unexpected error")
     }
 }
+
+func TestPull(t *testing.T){
+    FILE_NAME := "default.prop"
+    if _, err := os.Stat(FILE_NAME); !os.IsNotExist(err) {
+        os.Remove(FILE_NAME)
+    }
+    serialN := os.Getenv("DEV_SERIAL")
+    _, err := New().Pull(serialN, "/" + FILE_NAME)
+    if err != nil{
+        t.Error("Unexpected error")
+    }
+    if _, err := os.Stat(FILE_NAME); os.IsNotExist(err) {
+        t.Error("File was not found")
+    }
+}
