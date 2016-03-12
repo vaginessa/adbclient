@@ -107,7 +107,7 @@ func main(){
 
 #### GetProp
 
-Get the list of device properties from device ```GetProp(serial string) (string, error)```
+Get a list of device properties ```GetProp(serial string) (string, error)```
 
 ```
 package main
