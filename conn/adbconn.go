@@ -222,17 +222,21 @@ func (a *ADBconn) Push(serial, srcPath, destPath string) (string, error) {
     if err := a.syncCmd(conn, "SEND", filePath); err != nil {
         return "", err
     }
+    buff := make([]byte, 8192)
     f, err := os.Open(srcPath)
-    defer f.Close()
     if err != nil {
         return "", err
     }
-    buff := make([]byte, 8192)
+    defer f.Close()
     for {
         count, err := f.Read(buff)
         if err != nil {
             if err == io.EOF {
-                _, err = conn.Write([]byte("DONE"))
+                fileStat := uint32(0)
+                tmp := new(bytes.Buffer)
+                binary.Write(tmp, binary.BigEndian, []byte("DONE"))
+                binary.Write(tmp, binary.LittleEndian, fileStat)
+                _, err = conn.Write(tmp.Bytes())
                 break
             }
             return "", err
