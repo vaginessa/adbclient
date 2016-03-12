@@ -215,6 +215,7 @@ func (a *ADBconn) pushFile(conn net.Conn, srcPath string) (string, error) {
         return "", err
     }
     defer f.Close()
+    total := uint64(0)
     for {
         count, err := f.Read(buff)
         if err != nil {
@@ -242,8 +243,9 @@ func (a *ADBconn) pushFile(conn net.Conn, srcPath string) (string, error) {
             log.Println("Failed sending sync command ", err)
             return "", err
         }
+        total = total + uint64(length)
     }
-    return "", nil
+    return fmt.Sprintf("%s, %d bytes transferred", srcPath, total), nil
 }
 
 

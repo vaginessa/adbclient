@@ -96,7 +96,7 @@ import (
 )
 
 func main(){
-    message, err := adbclient.New().Pull("anchdgetsr345sacdf", "test.zip", "/mnt/sdcard/test.zip")
+    message, err := adbclient.New().Push("anchdgetsr345sacdf", "test.zip", "/mnt/sdcard/test.zip")
     if err != nil {
         fmt.Println("Failed with error: ", err)
     }
