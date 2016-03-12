@@ -63,13 +63,18 @@ func parseDevices(result string) ([]Device, error){
 }
 
 func (adb *ADBClient) Sync(cmd, serial, filename string) (string, error){
-    // Pulls a file from device
+    // Executes a Sync cmd in device
     switch cmd {
     case "LIST", "STAT", "RECV":
         return adb.conn_.Sync(cmd, serial, filename)
     default:
         return "", errors.New(fmt.Sprintf("Command: %s is unknown", cmd))
     }
+}
+
+func (adb *ADBClient) Pull(serial, filename string) (string, error){
+    // Pulls a file from device
+    return adb.conn_.Sync("RECV", serial, filename)
 }
 
 func (adb *ADBClient) Shell(serial, query string) (string, error) {

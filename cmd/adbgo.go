@@ -50,8 +50,8 @@ func syncStat(serial, filePath string){
     fmt.Println(result)
 }
 
-func syncRecv(serial, filePath string){
-    result, err := adbclient.New().Sync("RECV", serial, filePath)
+func pull(serial, filePath string){
+    result, err := adbclient.New().Pull(serial, filePath)
     if err != nil {
         fmt.Println("Failed with error: ", err)
     }
@@ -61,7 +61,7 @@ func syncRecv(serial, filePath string){
 func main(){
     syncList(serialN, "/mnt")
     syncStat(serialN, "/default.prop")
-    syncRecv(serialN, "/default.prop")
+    pull(serialN, "/default.prop")
 
     stdio := bufio.NewScanner(os.Stdin)
     adbc := &conn.ADBconn{}

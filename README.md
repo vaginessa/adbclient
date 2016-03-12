@@ -66,7 +66,24 @@ func main(){
 
 #### Pull
 
-Pull a file from device (WIP)
+Downloads a file from a given device ```Pull(serial, filePath string) (string, error)```
+
+```
+package main
+
+import (
+    "github.com/alexjch/adbclient"
+)
+
+func main(){
+    message, err := adbclient.New().Pull("anchdgetsr345sacdf", "test.zip")
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println(message)
+}
+```
+
 
 #### Push
 
