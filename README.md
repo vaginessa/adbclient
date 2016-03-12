@@ -86,5 +86,20 @@ func main(){
 
 #### Push
 
-Push file to device (WIP)
+Push file to device ```Push(serial, source, destination string) (string, error)```
 
+```
+package main
+
+import (
+    "github.com/alexjch/adbclient"
+)
+
+func main(){
+    message, err := adbclient.New().Pull("anchdgetsr345sacdf", "test.zip", "/mnt/sdcard/test.zip")
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println(message)
+}
+```

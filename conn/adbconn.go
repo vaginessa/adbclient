@@ -208,20 +208,7 @@ func (a *ADBconn) sync(conn net.Conn, serial string) (error){
     return nil
 }
 
-func (a *ADBconn) Push(serial, srcPath, destPath string) (string, error) {
-    conn, err := a.Connect()
-    if err != nil {
-        log.Println("Error connecting: ", err)
-        return "", err
-    }
-    defer conn.Close()
-    if err := a.sync(conn, serial); err != nil {
-        return "", err
-    }
-    filePath := fmt.Sprintf("%s,666", destPath)
-    if err := a.syncCmd(conn, "SEND", filePath); err != nil {
-        return "", err
-    }
+func (a *ADBconn) pushFile(conn net.Conn, srcPath string) (string, error) {
     buff := make([]byte, 8192)
     f, err := os.Open(srcPath)
     if err != nil {
@@ -258,6 +245,25 @@ func (a *ADBconn) Push(serial, srcPath, destPath string) (string, error) {
     }
     return "", nil
 }
+
+
+func (a *ADBconn) Push(serial, srcPath, destPath string) (string, error) {
+    conn, err := a.Connect()
+    if err != nil {
+        log.Println("Error connecting: ", err)
+        return "", err
+    }
+    defer conn.Close()
+    if err := a.sync(conn, serial); err != nil {
+        return "", err
+    }
+    filePath := fmt.Sprintf("%s,666", destPath)
+    if err := a.syncCmd(conn, "SEND", filePath); err != nil {
+        return "", err
+    }
+    return a.pushFile(conn, srcPath)
+}
+
 
 func (a *ADBconn) Sync(cmd, serial, filePath string) (string, error) {
     conn, err := a.Connect()
