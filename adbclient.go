@@ -11,6 +11,7 @@ import (
 const (
     CHECKSUM = "OKAY0000"
     SHELL = "shell:<cmd>"
+    LIST_PACKAGES = "shell:pm list packages"
 )
 
 type ADBClient struct {
@@ -92,7 +93,7 @@ func (adb *ADBClient) Shell(serial, query string) (string, error) {
 }
 
 func (adb *ADBClient) GetProp(serial string) (string, error) {
-    // Sends a command to shell
+    // Sends getprop command to shell
     result, err := adb.conn_.SendToHost(serial, strings.Replace(SHELL, "<cmd>", "getprop", 1))
     if err != nil{
         return "", err
@@ -121,9 +122,9 @@ func (adb *ADBClient) Version() (string, error){
 }
 
 func (adb *ADBClient) Track() <-chan []Device{
+    // Tracks changes in devices connected to host
     devices := adb.conn_.Track()
     update := make(chan []Device)
-
     go func(){
         for{
             devcs, err := parseDevices(<-devices)
@@ -133,8 +134,16 @@ func (adb *ADBClient) Track() <-chan []Device{
             update <- devcs
         }
     }()
-
     return update
+}
+
+func (adb *ADBClient) ListPackages(serial string) (string, error){
+    // Sends getprop command to shell
+    result, err := adb.conn_.SendToHost(serial, LIST_PACKAGES)
+    if err != nil{
+        return "", err
+    }
+    return result, nil
 }
 
 func New() *ADBClient{

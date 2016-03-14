@@ -124,3 +124,24 @@ func main(){
     fmt.Println(props)
 }
 ```
+
+
+#### ListPackages 
+
+List packages in a device ```ListPackages(serial string) (string, error)```
+
+```
+package main
+
+import (
+    "github.com/alexjch/adbclient"
+)
+
+func main(){
+    packages, err := adbclient.New().ListPackages("anchdgetsr345sacdf")
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println(packages)
+}
+```
