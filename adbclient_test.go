@@ -47,3 +47,15 @@ func TestPull(t *testing.T){
     }
     os.Remove(FILE_NAME)
 }
+
+/*TODO: func TestPush(t *testing.T){
+
+}*/
+
+func TestPackages(t *testing.T){
+    serialN := os.Getenv("DEV_SERIAL")
+    packages, err := New().ListPackages(serialN)
+    if err != nil && len(packages) > 10{
+        t.Error("Unexpected error")
+    }
+}
