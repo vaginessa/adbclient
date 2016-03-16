@@ -167,6 +167,11 @@ func (adb *ADBClient) GetFeatures(serial string) (string, error){
     return result, nil
 }
 
+func (adb *ADBClient) Screencapture(serial string) (string, error){
+ 
+    return "", nil
+}
+
 func New() *ADBClient{
     // Returns a new instance of ADBClient
     client := ADBClient{

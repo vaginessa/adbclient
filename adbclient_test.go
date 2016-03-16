@@ -82,5 +82,17 @@ func TestGetFeatures(t *testing.T){
 }
 
 
+func TestScreencapture(t *testing.T){
+    serialN := os.Getenv("DEV_SERIAL")
+    captureFile, err := New().Screencapture(serialN)
+    if err != nil {
+        t.Error(err)
+    }
+    _, err = os.Stat(captureFile)
+    if os.IsNotExist(err) {
+        t.Error("File not found: ", captureFile)
+    }
+}
+
 
 /* TODO: Negative/failing tests */
