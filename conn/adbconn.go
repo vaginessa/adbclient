@@ -190,7 +190,6 @@ func (a *ADBconn) syncCmd(conn net.Conn, cmd, filePath string) (error) {
 
 func (a *ADBconn) sync(conn net.Conn, serial string) (error){
     host := strings.Replace(HOST_TRANSPORT, "<id>", serial, 1)
-    log.Println(host)
     if err := a.send(conn, host); err != nil {
         log.Println("Error sending transport")
         return err

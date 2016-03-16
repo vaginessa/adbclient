@@ -54,8 +54,33 @@ func TestPull(t *testing.T){
 
 func TestPackages(t *testing.T){
     serialN := os.Getenv("DEV_SERIAL")
-    packages, err := New().ListPackages(serialN)
+    flags := []string(nil)
+    packages, err := New().ListPackages(serialN, flags)
     if err != nil && len(packages) > 10{
         t.Error("Unexpected error")
     }
+    t.Log(packages)
 }
+
+func TestPackagesFlag(t *testing.T){
+    serialN := os.Getenv("DEV_SERIAL")
+    flags := []string{SYSTEM_PACKAGES, ASSOCIATED_FILE}
+    packages, err := New().ListPackages(serialN, flags)
+    if err != nil && len(packages) > 10{
+        t.Error("Unexpected error")
+    }
+    t.Log(packages)
+}
+
+func TestGetFeatures(t *testing.T){
+    serialN := os.Getenv("DEV_SERIAL")
+    features, err := New().GetFeatures(serialN)
+    if err != nil && len(features) > 10{
+        t.Error("Unexpected error")
+    }
+    t.Log(features)
+}
+
+
+
+/* TODO: Negative/failing tests */

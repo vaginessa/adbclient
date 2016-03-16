@@ -128,7 +128,7 @@ func main(){
 
 #### ListPackages 
 
-List packages in a device ```ListPackages(serial string) (string, error)```
+List packages in a device ```ListPackages(serial string, flags []string) (string, error)```
 
 ```
 package main
@@ -138,10 +138,43 @@ import (
 )
 
 func main(){
-    packages, err := adbclient.New().ListPackages("anchdgetsr345sacdf")
+    // No flags
+    flags := []string(nil)
+    packages, err := adbclient.New().ListPackages("anchdgetsr345sacdf", flags)
     if err != nil {
         fmt.Println("Failed with error: ", err)
     }
     fmt.Println(packages)
+    
+    // System packages '-s' flag
+    flags = []string{adbclient.SYSTEM_PACKAGES}
+    packages, err = adbclient.New().ListPackages("anchdgetsr345sacdf", flags)
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println(packages)   
 }
 ```
+
+
+#### GetFeatures
+
+Get a list of features from the device ```GetFeatures(serial string)(string, error)```
+
+```
+package main
+
+import (
+    "github.com/alexjch/adbclient"
+)
+
+func main(){
+    features, err := adbclient.New().GetFeatures("anchdgetsr345sacdf")
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println(features)
+}
+```
+
+

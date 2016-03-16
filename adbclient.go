@@ -12,6 +12,16 @@ const (
     CHECKSUM = "OKAY0000"
     SHELL = "shell:<cmd>"
     LIST_PACKAGES = "shell:pm list packages"
+    GET_FEATURES = "shell:pm list features"
+
+    /* List packages flags */
+    ASSOCIATED_FILE = "-f"
+    DISABLED_PACKAGES = "-d"
+    ENABLED_PACKAGES = "-e"
+    SYSTEM_PACKAGES = "-s"
+    THIRD_PARTY_PACKAGES = "-3"
+    SEE_INSTALLER = "-i"
+    INCLUDE_UNISTALLED = "-u"
 )
 
 type ADBClient struct {
@@ -137,9 +147,20 @@ func (adb *ADBClient) Track() <-chan []Device{
     return update
 }
 
-func (adb *ADBClient) ListPackages(serial string) (string, error){
+func (adb *ADBClient) ListPackages(serial string, flags []string) (string, error){
     // Sends getprop command to shell
-    result, err := adb.conn_.SendToHost(serial, LIST_PACKAGES)
+    args := []string{string(LIST_PACKAGES), strings.Join(flags, " ")}
+    command := strings.Join(args, " ")
+    result, err := adb.conn_.SendToHost(serial, command)
+    if err != nil{
+        return "", err
+    }
+    return result, nil
+}
+
+func (adb *ADBClient) GetFeatures(serial string) (string, error){
+    // Gets features from device
+    result, err := adb.conn_.SendToHost(serial, GET_FEATURES)
     if err != nil{
         return "", err
     }
