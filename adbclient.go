@@ -2,6 +2,8 @@ package adbclient
 
 import (
     "fmt"
+    "path"
+    "time"
     "errors"
     "strconv"
     "strings"
@@ -13,6 +15,8 @@ const (
     SHELL = "shell:<cmd>"
     LIST_PACKAGES = "shell:pm list packages"
     GET_FEATURES = "shell:pm list features"
+    SCREEN_CAP = "shell:screencap -p <img_dest>"
+    DEFAULT_IMG_DEST = "/mnt/sdcard"
 
     /* List packages flags */
     ASSOCIATED_FILE = "-f"
@@ -168,8 +172,24 @@ func (adb *ADBClient) GetFeatures(serial string) (string, error){
 }
 
 func (adb *ADBClient) Screencapture(serial string) (string, error){
- 
-    return "", nil
+    // Generates a screncapture and pulls to host disk
+    tmpFile := fmt.Sprintf("%d.png", time.Now().Unix())
+    imgDest := path.Join(DEFAULT_IMG_DEST, tmpFile)
+    _, err := adb.conn_.SendToHost(serial, strings.Replace(SCREEN_CAP, "<img_dest>", imgDest, 1))
+    if err != nil{
+        return "", err
+    }
+    _, err = adb.Pull(serial, imgDest)
+    if err != nil{
+        return "", err
+    }
+/*
+    TODO: clean file after done...
+    defer func(){
+        REMOVE_FILE := "rm " + imgDest
+        adb.Shell(serial, REMOVE_FILE)
+    }()*/
+    return tmpFile, nil
 }
 
 func New() *ADBClient{
