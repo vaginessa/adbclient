@@ -183,12 +183,11 @@ func (adb *ADBClient) Screencapture(serial string) (string, error){
     if err != nil{
         return "", err
     }
-/*
-    TODO: clean file after done...
+
     defer func(){
         REMOVE_FILE := "rm " + imgDest
         adb.Shell(serial, REMOVE_FILE)
-    }()*/
+    }()
     return tmpFile, nil
 }
 

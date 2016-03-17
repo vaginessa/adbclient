@@ -146,8 +146,7 @@ func (a *ADBconn) readRecv (conn net.Conn, filename string) (string, error){
             }
             return "", err
         }
-        if strings.Contains(string(resp), "DONE") {
-            indx := strings.Index(string(resp), "DONE")
+        if indx := strings.Index(string(resp), "DONE"); indx != -1 {
             count, err := f.Write(resp[0:indx])
             if err != nil {
                 return "", err
@@ -155,7 +154,6 @@ func (a *ADBconn) readRecv (conn net.Conn, filename string) (string, error){
             total = total + uint64(count)
             break
         } else if indx := strings.Index(string(resp), "DATA"); indx != -1 {
-            // TODO: use a scanner to remove DATA markers
             data := append(resp[:indx], resp[indx+8:]...)
             count, err := f.Write(data)
             if err != nil {
