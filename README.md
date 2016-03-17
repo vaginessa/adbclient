@@ -178,3 +178,26 @@ func main(){
 ```
 
 
+#### Screencapture
+
+Take a screenshot from the device screen and pulls the file to CWD ```Screencapture(serial string)(string, error)```
+```
+package main
+
+import (
+    "github.com/alexjch/adbclient"
+)
+
+func main(){
+    fileName, err := adbclient.New().Screencapture("anchdgetsr345sacdf")
+    if err != nil {
+        fmt.Println("Failed with error: ", err)
+    }
+    fmt.Println("Screen capture file: " + fileName)
+}
+```
+
+```fileName``` has a ```.png``` extension and the name is a timestamp in unix time (epoch time)
+
+   
+
