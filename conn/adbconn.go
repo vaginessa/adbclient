@@ -17,6 +17,7 @@ const (
     PORT = 5037
     HOST_TRANSPORT = "host:transport:<id>"
     TRACK_CMD = "host:track-devices"
+    LOLCAT = "shell:logcat 2>/dev/null"
     SYNC = "sync:"
 )
 
@@ -293,20 +294,16 @@ func (a *ADBconn) Sync(cmd, serial, filePath string) (string, error) {
     return "", nil
 }
 
-func (a *ADBconn) Track() <-chan string {
-    //
+func (a *ADBconn) Track() (<-chan string, error) {
+    // Tracks state change in connected devices
     conn, err := a.Connect()
     if err != nil {
-        log.Println("Error connecting: ", err)
-        return nil
+        return nil, err
     }
     if err = a.send(conn, TRACK_CMD); err != nil {
-        log.Println("Error sending command")
-        return nil
+        return nil, err
     }
-
     out := make(chan string)
-
     go func() {
         for {
             _, resp, err := a.receive(conn)
@@ -318,20 +315,48 @@ func (a *ADBconn) Track() <-chan string {
             out <- string(resp)
         }
     }()
+    return out, nil
+}
 
-    return out
+func (a *ADBconn) Logcat(serial string) (<-chan string, error){
+    // Streams out logs
+    conn, err := a.Connect()
+    if err != nil {
+        return nil, err
+    }
+    host := strings.Replace(HOST_TRANSPORT, "<id>", serial, 1)
+    if err := a.send(conn, host); err != nil {
+        return nil, err
+    }
+    if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {
+        return nil, err
+    }
+    if err = a.send(conn, LOLCAT); err != nil {
+        return nil, err
+    }
+    out := make(chan string)
+    go func() {
+        for {
+            _, resp, err := a.receive(conn)
+            if err != nil {
+                log.Println("Error receiving data", err)
+                conn.Close()
+                break
+            }
+            out <- string(resp)
+        }
+    }()
+    return out, nil
 }
 
 func (a *ADBconn) Send(cmd string) (string, error) {
     // Send command to host
     conn, err := a.Connect()
     if err != nil {
-        log.Println("Error connecting: ", err)
         return "", err
     }
     defer conn.Close()
     if err = a.send(conn, cmd); err != nil {
-        log.Println("Error sending command")
         return "", err
     }
     _, resp, err := a.receive(conn)
@@ -345,21 +370,18 @@ func (a *ADBconn) SendToHost(serial string, cmd string) (string, error) {
     // Send command to host identify by serial
     conn, err := a.Connect()
     if err != nil {
-        log.Println("Error connecting: ", err)
         return "", err
     }
     defer conn.Close()
     out := []string{}
     host := strings.Replace(HOST_TRANSPORT, "<id>", serial, 1)
     if err = a.send(conn, host); err != nil {
-        log.Println("Error sending transport")
         return "", err
     }
     if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {
         return "", errors.New("OKAY header not found")
     }
     if err = a.send(conn, cmd); err != nil {
-        log.Println("Error sending command")
         return "", err
     }
     if _, resp, _ := a.receive(conn); strings.Contains(string(resp), "OKAY") != true {

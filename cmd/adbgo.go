@@ -3,9 +3,7 @@ package main
 import (
     "os"
     "fmt"
-    "bufio"
     "github.com/alexjch/adbclient"
-    "github.com/alexjch/adbclient/conn"
 )
 
 var serialN = os.Getenv("DEV_SERIAL")
@@ -27,8 +25,7 @@ func devices(){
 }
 
 func track(){
-    devices := adbclient.New().Track()
-
+    devices, _ := adbclient.New().Track()
     for{
         fmt.Println(<-devices)
     }
@@ -74,18 +71,17 @@ func getprop(serial string){
     fmt.Println(props)
 }
 
-func main(){
-/*    syncList(serialN, "/mnt")
-    syncStat(serialN, "/default.prop")
-    pull(serialN, "/default.prop")*/
-//    push(serialN, "/Users/alexjch/Downloads/edisonbluetooth_331704007.pdf", "/mnt/sdcard/bluez.pdf")
-    getprop(serialN)
-    stdio := bufio.NewScanner(os.Stdin)
-    adbc := &conn.ADBconn{}
-
-    for stdio.Scan() {
-        cmd := stdio.Text()
-        ret, _ := adbc.Send(cmd)
-        fmt.Println(ret)
+func lolcat(serial string){
+    pipe, err := adbclient.New().Logcat(serial)
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(0)
     }
+    for{
+        fmt.Println(<-pipe)
+    }
+}
+
+func main(){
+    track()
 }

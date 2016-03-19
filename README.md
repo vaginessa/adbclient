@@ -45,7 +45,7 @@ func main(){
 
 #### Track
 
-Track changes in devices connected to ADB and reports the changes using a channel ```Track() (<-chan)```
+Track changes in devices connected to ADB and reports the changes using a channel ```Track() (<-chan []Device, error)```
 
 ```
 package main
@@ -197,7 +197,28 @@ func main(){
 }
 ```
 
-```fileName``` has a ```.png``` extension and the name is a timestamp in unix time (epoch time)
+```fileName``` has ```.png``` extension and the name is a timestamp in unix time (epoch time)
+
+
+#### Logcat
+
+Returns a channel that streams logs ```Logcat(serial) (<-chan string, error)```
+```
+package main
+
+import (
+    "github.com/alexjch/adbclient"
+)
+
+func main(){
+    logs, err := adbclient.New().Logcat("anchdgetsr345sacdf")
+    if err, = nil {
+        fmt.Println("Failed to open logs:", err)
+    }
+    fmt.Println(<-logs)
+}
+```
+
 
    
 

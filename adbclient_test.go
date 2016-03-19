@@ -81,7 +81,6 @@ func TestGetFeatures(t *testing.T){
     t.Log(features)
 }
 
-
 func TestScreencapture(t *testing.T){
     serialN := os.Getenv("DEV_SERIAL")
     captureFile, err := New().Screencapture(serialN)
@@ -94,5 +93,16 @@ func TestScreencapture(t *testing.T){
     }
 }
 
+func TestLogcat(t *testing.T){
+    serialN := os.Getenv("DEV_SERIAL")
+    pipe := New().Logcat(serialN)
+    if pipe == nil {
+        t.Error("Logcat failed")
+    }
+    i := 0
+    for ;i < 4; {
+        t.Log(<-pipe)
+    }
+}
 
 /* TODO: Negative/failing tests */

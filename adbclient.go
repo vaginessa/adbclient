@@ -135,9 +135,12 @@ func (adb *ADBClient) Version() (string, error){
     return fmt.Sprintf("%d", v), nil
 }
 
-func (adb *ADBClient) Track() <-chan []Device{
+func (adb *ADBClient) Track() (<-chan []Device, error){
     // Tracks changes in devices connected to host
-    devices := adb.conn_.Track()
+    devices, err := adb.conn_.Track()
+    if err != nil {
+        return nil, err
+    }
     update := make(chan []Device)
     go func(){
         for{
@@ -148,7 +151,11 @@ func (adb *ADBClient) Track() <-chan []Device{
             update <- devcs
         }
     }()
-    return update
+    return update, nil
+}
+
+func (adb *ADBClient) Logcat(serial string) (<-chan string, error) {
+    return adb.conn_.Logcat(serial)
 }
 
 func (adb *ADBClient) ListPackages(serial string, flags []string) (string, error){
