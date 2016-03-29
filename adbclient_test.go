@@ -95,7 +95,7 @@ func TestScreencapture(t *testing.T){
 
 func TestLogcat(t *testing.T){
     serialN := os.Getenv("DEV_SERIAL")
-    pipe := New().Logcat(serialN)
+    pipe, _ := New().Logcat(serialN)
     if pipe == nil {
         t.Error("Logcat failed")
     }
